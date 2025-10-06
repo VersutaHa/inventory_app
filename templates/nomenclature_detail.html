@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ nomen.name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 15px; background: #f5f5f5; }
+        h2 { color: #2c3e50; }
+        .form-box { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        input, button, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #2ecc71; color: white; border: none; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #34495e; color: white; }
+        summary { cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>📦 {{ nomen.name }} ({{ nomen.code }})</h2>
+    <p><strong>Категория:</strong> {{ nomen.category or '-' }}</p>
+    <p><strong>Общий остаток:</strong> <span style="font-size:1.4em;color:#27ae60;">{{ total }}</span> ед.</p>
+
+    <a href="{{ url_for('index') }}">← Назад к списку</a>
+
+    <div class="form-box">
+        <details>
+            <summary>➕ Добавить приход (новую партию)</summary>
+            <form method="POST" action="{{ url_for('add_receipt', nomen_id=nomen.id) }}" style="margin-top:10px;">
+                <input type="text" name="batch_number" placeholder="№ партии *" required>
+                <input type="number" name="manufacture_year" placeholder="Год изготовления *" min="1900" max="2100" required>
+                <input type="text" name="manufacturer" placeholder="Завод-изготовитель *" required>
+                <input type="number" name="quantity" placeholder="Кол-во *" min="1" required>
+                <input type="text" name="location" placeholder="Место хранения">
+                <hr>
+                <input type="text" name="doc_number" placeholder="№ документа *" required>
+                <select name="doc_type" required>
+                    <option value="">— Тип документа —</option>
+                    {% for dt in doc_types %}
+                    <option value="{{ dt }}">{{ dt|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="doc_date" value="{{ today }}" required>
+                <input type="text" name="issued_by" placeholder="Кем выдан">
+                <input type="text" name="notes" placeholder="Примечание">
+                <button type="submit">+ Приход</button>
+            </form>
+        </details>
+    </div>
+
+    <h3>📦 Партии ({{ batches|length }})</h3>
+    {% if batches %}
+        <table>
+            <thead>
+                <tr>
+                    <th>№ партии</th>
+                    <th>Год</th>
+                    <th>Завод</th>
+                    <th>Кол-во</th>
+                    <th>Место</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in batches %}
+                <tr>
+                    <td>{{ b.batch_number }}</td>
+                    <td>{{ b.manufacture_year }}</td>
+                    <td>{{ b.manufacturer }}</td>
+                    <td><strong>{{ b.quantity }}</strong></td>
+                    <td>{{ b.location or '-' }}</td>
+                    <td>
+                        <details>
+                            <summary style="color:#e74c3c;">– Списать</summary>
+                            <form method="POST" action="{{ url_for('write_off', batch_id=b.id) }}" style="margin-top:5px;">
+                                <input type="hidden" name="nomen_id" value="{{ nomen.id }}">
+                                <input type="number" name="quantity" placeholder="Кол-во" min="1" max="{{ b.quantity }}" required style="width:80px;">
+                                <input type="text" name="doc_number" placeholder="№ документа" required style="width:100px;">
+                                <select name="doc_type" required style="width:120px;font-size:12px;">
+                                    {% for dt in doc_types %}
+                                    <option value="{{ dt }}">{{ dt|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="date" name="doc_date" value="{{ today }}" required style="width:120px;">
+                                <button type="submit" style="padding:3px 6px;font-size:12px;background:#e74c3c;">Списать</button>
+                            </form>
+                        </details>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>📭 Нет партий.</p>
+    {% endif %}
+</body>
+</html>
