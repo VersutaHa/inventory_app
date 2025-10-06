@@ -1,3 +1,4 @@
+python
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
@@ -319,4 +320,5 @@ def documents_list():
 
 if name == '__main__':
     init_db()
+
     app.run(debug=True)
